@@ -141,3 +141,7 @@ Per verificare l'app senza interfaccia:
 - `MacSweep --render-map <cartella> <out.png>`: disegna la mappa di una cartella;
 - `MacSweep --render-ui <cartella>`: disegna notch, festa e Pulizia rapida;
 - `MacSweep --page <pagina>`: apre una pagina, comodo per gli screenshot.
+
+## Licenza
+
+[MIT](LICENSE)
