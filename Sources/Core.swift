@@ -515,6 +515,7 @@ struct NotchFlash: Equatable { let symbol: String, text: String, color: Color }
         }
         loadCategories()
         needsFDA = (try? FileManager.default.contentsOfDirectory(atPath: HOME + "/.Trash")) == nil
+        applyLaunchArguments()
         Task {  // anche con la sola icona nella barra dei menu: spazio ogni 15 min, fotografia ogni 12 ore
             while true {
                 try? await Task.sleep(for: .seconds(900))
@@ -523,6 +524,16 @@ struct NotchFlash: Equatable { let symbol: String, text: String, color: Color }
                 if let last = history.last?.date, Date().timeIntervalSince(last) > 12 * 3600, !loadingCats { loadCategories() }
             }
         }
+    }
+
+    /// Per screenshot e documentazione: `--page apps --select-app /Applications/X.app`, `--explore /percorso --map`.
+    private func applyLaunchArguments() {
+        let args = CommandLine.arguments
+        func value(_ flag: String) -> String? { args.firstIndex(of: flag).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
+        if let p = value("--page"), let pg = Page.allCases.first(where: { "\($0)" == p }) { page = pg }
+        if let app = value("--select-app") { selectedApp = app }
+        if args.contains("--map") { exploreMap = true }
+        if let dir = value("--explore") { explore(dir) }
     }
 
     var lowSpace: Bool {

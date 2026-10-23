@@ -1,74 +1,143 @@
 # MacSweep
 
-App nativa macOS 15+ (SwiftUI + Swift Charts) per gestire lo storage e fare manutenzione. Nessuna dipendenza, nessun Xcode project.
+**Il tuo CCleaner per Mac, nativo e leggero.** Vedi chi occupa il disco, pulisci cache e residui di sviluppo, disinstalla le app con tutto quello che lasciano in giro, e tieni d'occhio spazio, memoria e batteria. Anche dal notch.
 
-⌘R in ogni sezione: ricalcola / riscansiona / cerca.
+*A native, lightweight disk & maintenance app for macOS (SwiftUI). UI in Italian.*
 
-## Build e installazione
+![Panoramica](docs/screenshots/panoramica.png)
 
-```bash
-./build.sh install
-```
+- App nativa **SwiftUI + Swift Charts**, macOS 15+, Apple Silicon
+- **Nessuna dipendenza**, nessun progetto Xcode: si compila con `swiftc` da uno script
+- Tutto quello che cancella va **nel Cestino** ed è ripristinabile dal Registro
+- Scanner del disco proprio: **4-5× più veloce di `du`**, con cache per avere i dati subito all'apertura
 
-Compila con `swiftc`, genera l'icona, esegue il self-test (`MacSweep --selftest`) e installa in `/Applications/MacSweep.app`. Senza `install` crea solo `build/MacSweep.app`.
+---
 
-**Accesso completo al disco**: Impostazioni di Sistema → Privacy e sicurezza → Accesso completo al disco → aggiungi MacSweep. Senza, Cestino, Mail e alcuni container risultano vuoti. `build.sh` firma col certificato "MacSweep Local Signing" del portachiavi, se presente: la firma resta stabile e il permesso sopravvive alle ricompilazioni (senza certificato firma ad-hoc e il permesso va ridato a ogni build).
+## Funzioni
 
-Verifica permesso: `open -a MacSweep --args --diag && cat /tmp/macsweep-diag.txt` (OK/NO su Cestino, Mail, Safari).
+### Panoramica
+L'anello del disco diviso per categoria e le card di "chi occupa cosa": cache, log, Xcode, simulatori, npm/pnpm/Gradle, Docker, backup iPhone, Download, app. Da qui partono **Pulizia rapida** e **Svuota Cestino**.
 
-## Comodità
+### Esplora e mappa a raggiera
+Cartelle ordinate per peso, con la barra di composizione e le icone del Finder. Oppure la **mappa a raggiera**: tre anelli (cartella, sottocartelle, sotto-sottocartelle), nome e peso al passaggio del mouse, clic su una fetta per entrarci.
 
-- **Pulizia rapida** (Panoramica, barra dei menu, notch): cache, log, DerivedData, npm, Gradle, `brew cleanup`, simulatori non disponibili e Cestino in un clic, con anteprima e spunte; a fine pulizia, festa con lo spazio liberato.
-- **Svuota Cestino** ovunque (anche i Cestini dei dischi esterni), con conferma: è definitivo.
-- **Notch** (Mac con notch): passandoci sopra si apre un pannello con spazio libero, RAM, Svuota Cestino, Pulizia rapida, Apri. Mostra le scansioni in corso e "+X GB liberi" dopo una pulizia. Si spegne in Andamento → Avvisi.
-- **Aggiornamenti → Strumenti di sviluppo**: npm globali, pnpm, bun, Rust (rustup), uv, Claude Code, Node LTS (nvm).
+| Elenco | Mappa |
+|---|---|
+| ![Esplora](docs/screenshots/esplora.png) | ![Mappa](docs/screenshots/mappa.png) |
 
-## Sezioni
+### Disinstalla
+L'elenco delle app con peso, versione e ultimo uso. Per l'app selezionata trova i **residui in `~/Library`** (preferenze, cache, container, Application Support, stato finestre, LaunchAgent) con corrispondenze esatte sull'identificativo. Disinstalla tutto nel Cestino, chiudendo l'app se è aperta. Nell'esempio Docker pesa 2,3 GB, ma lascia 33,7 GB di container.
 
-**Spazio**
-- **Panoramica**: anello del disco e chi occupa cosa (cache, log, Xcode, npm/pnpm/gradle, Docker, backup iPhone, Download, app). "Pulisci" sposta il contenuto nel Cestino.
-- **Andamento**: grafico dello spazio libero nel tempo (una fotografia al giorno in `~/Library/Application Support/MacSweep/history.json`) e cosa è cresciuto in 7/30/90 giorni. Icona nella barra dei menu, avviso sotto soglia, apertura all'accensione.
-- **Esplora**: cartelle ordinate per peso con barra di composizione, oppure **Mappa** a raggiera (3 anelli, clic su una fetta per entrare).
-  Scanner proprio (`Sources/Scanner.swift`): `getattrlistbulk` + 12 thread, hard link contati una volta come `du -x`. Home da 550 GB in ~30-40 s (con `du` ~150 s). L'ultima scansione resta in `~/Library/Application Support/MacSweep/scan-cache.json` (cartelle ≥ 1 MB): all'avvio i dati compaiono subito e, se hanno più di un'ora, si aggiornano in background.
-- **File grandi**: via Spotlight.
-- **Download e duplicati**: installer (.dmg/.pkg…, con "App già installata"), file non aperti da N mesi, duplicati veri per contenuto (SHA-256), tenendo sempre almeno una copia.
-- **Dischi esterni**: spazio, file nascosti di macOS (.DS_Store, ._*, Cestino del disco), espulsione.
+![Disinstalla](docs/screenshots/disinstalla.png)
 
-**Sviluppo**
-- **Progetti dev**: node_modules, venv, target, Pods, .next…
-- **Versioni strumenti**: Node (nvm), Python (pyenv), Ruby (rbenv), Rust (rustup), Java, Go, Gradle, Android; quella in uso è protetta.
-- **Homebrew**: pacchetti e app con peso, chi li usa, orfani; disinstallazione.
-- **Repository Git**: peso di .git, `git gc`, eliminazione delle branch già unite (`git branch -d`, mai main/master/develop).
-- **Docker**: immagini, container, volumi e build cache uno per uno (cancellazione definitiva, via CLI `docker`).
-- **Simulatori**: runtime iOS/watchOS e singoli simulatori (`xcrun simctl`).
+### Pulizia rapida, Svuota Cestino e festa
+Un pannello con anteprima e spunte: cache, log, DerivedData, npm, Gradle, `brew cleanup`, simulatori non disponibili e Cestino. Le voci si spuntano man mano che finiscono. Alla fine compare lo spazio davvero liberato, con i coriandoli.
+
+![Festa](docs/screenshots/festa.png)
+
+### Notch
+Sui Mac con il notch, una breve sosta del mouse sul notch apre un pannello stile Dynamic Island con:
+- spazio libero e RAM;
+- i pulsanti Svuota Cestino, Pulizia rapida e Apri.
+
+Quando è chiuso non si allarga mai ai lati, dove ci sono le icone della barra dei menu: i messaggi scendono sotto il notch e le scansioni sono una linea sottile.
+
+| Pannello aperto | Dopo una pulizia |
+|---|---|
+| ![Notch aperto](docs/screenshots/notch-aperto.png) | ![Notch, messaggio](docs/screenshots/notch-attivita.png) |
+
+### Sviluppo
+- **Progetti dev**: `node_modules`, `venv`, `target`, `Pods`, `.next`… in tutta la home.
+- **Versioni strumenti**: Node (nvm), Python (pyenv), Ruby (rbenv), Rust (rustup), Java, Go, Gradle, Android. La versione in uso è protetta.
+- **Homebrew**: pacchetti e app con peso, chi li usa e gli orfani.
+- **Repository Git**: peso di `.git`, `git gc` e branch già unite (`git branch -d`, mai main/master/develop).
+- **Docker**: immagini, container, volumi e build cache uno per uno.
+- **Simulatori**: runtime e singoli simulatori di Xcode.
 - **Modelli AI**: LM Studio, Hugging Face, Draw Things, Ollama.
 - **Macchine virtuali**: UTM, Parallels, VMware, VirtualBox.
 
-**Sistema**
-- **Disinstalla**: app + residui in `~/Library` (preferenze, cache, container…), tutto nel Cestino.
-- **Browser e privacy**: cache, cronologia e cookie di Chrome, Edge, Brave, Arc, Safari, Firefox (di Firefox niente cronologia: sta coi segnalibri).
-- **Avvio automatico**: LaunchAgents ed elementi di login. Modificabili solo i tuoi agenti; quelli di sistema/aziendali in sola lettura.
-- **Prestazioni**: memoria (con pressione e swap), CPU, app raggruppate con i loro processi, "Chiudi".
-- **Aggiornamenti**: `brew outdated`, App Store (con `mas`), Aggiornamento Software di macOS.
+| Versioni strumenti | Homebrew |
+|---|---|
+| ![Versioni](docs/screenshots/versioni.png) | ![Homebrew](docs/screenshots/homebrew.png) |
+
+![Simulatori](docs/screenshots/simulatori.png)
+
+### Aggiornamenti
+Gli **strumenti di sviluppo** (npm globali, pnpm, bun, Rust, uv, Claude Code, Node LTS), poi Homebrew, App Store (con `mas`) e macOS. Ognuno si aggiorna col suo comando, oppure c'è "Aggiorna tutto".
+
+![Aggiornamenti](docs/screenshots/aggiornamenti.png)
+
+### Sistema
+- **Browser e privacy**: cache, cronologia e cookie di Chrome, Edge, Brave, Arc, Safari e Firefox. Chiude il browser se è aperto; la cronologia di Firefox non si tocca, perché sta insieme ai segnalibri.
+- **Avvio automatico**: LaunchAgent ed elementi di login. Si possono modificare solo gli agenti dell'utente; quelli di sistema o aziendali sono in sola lettura.
+- **Prestazioni**: memoria (pressione e swap), CPU, app raggruppate con i loro processi, "Chiudi".
 - **Batteria**: salute, cicli, capacità reale, temperatura, alimentatore.
-- **Manutenzione**: brew, simctl, npm/pnpm, docker, QuickLook, snapshot, svuota Cestino + **Pulizia programmata** (LaunchAgent `local.sriva.macsweep.autoclean` che lancia `MacSweep --autoclean`).
-- **Registro**: tutto ciò che è finito nel Cestino, raggruppato per sessione, con "Rimetti tutto".
+- **Manutenzione**: comandi di pulizia dei tool, più la **pulizia programmata** (un LaunchAgent che lancia `MacSweep --autoclean` il giorno e all'ora scelti).
+- **Registro**: tutto quello che è finito nel Cestino, raggruppato per sessione, con "Rimetti tutto".
+
+| Browser e privacy | Batteria |
+|---|---|
+| ![Browser](docs/screenshots/browser.png) | ![Batteria](docs/screenshots/batteria.png) |
+
+![Manutenzione](docs/screenshots/manutenzione.png)
+
+### Andamento e barra dei menu
+Una fotografia del disco al giorno, il grafico dello spazio libero e "cosa è cresciuto" negli ultimi 7, 30 o 90 giorni. Nella barra dei menu ci sono lo spazio libero, un avviso sotto una soglia e le azioni rapide.
+
+![Andamento](docs/screenshots/andamento.png)
+
+Tra le altre sezioni ci sono anche **File grandi** (con Spotlight), **Download e duplicati** (installer già usati, file mai aperti, duplicati veri riconosciuti col SHA-256) e **Dischi esterni** (file nascosti di macOS ed espulsione). ⌘R in ogni sezione ricalcola o cerca.
+
+---
+
+## Installazione
+
+Servono macOS 15 o successivo e gli strumenti da riga di comando di Xcode (`xcode-select --install`).
+
+```bash
+git clone https://github.com/simiriva95/macsweep.git
+cd macsweep
+./build.sh install
+```
+
+`build.sh` compila con `swiftc`, genera l'icona, esegue il self-test e installa `/Applications/MacSweep.app`. Senza `install` crea solo `build/MacSweep.app`.
+
+### Accesso completo al disco
+Impostazioni di Sistema → Privacy e sicurezza → **Accesso completo al disco** → aggiungi MacSweep. Senza questo permesso, Cestino, Mail e alcuni container risultano vuoti.
+
+Per verificare il permesso:
+
+```bash
+open -a MacSweep --args --diag && cat /tmp/macsweep-diag.txt
+```
+
+### Firma stabile (consigliata)
+macOS lega l'Accesso completo al disco alla firma dell'app. Con la firma ad-hoc ogni ricompilazione fa perdere il permesso. Se nel portachiavi c'è un certificato di firma del codice chiamato **"MacSweep Local Signing"**, `build.sh` lo usa e il permesso resta. Per crearlo:
+
+Accesso Portachiavi → Assistente Certificato → Crea un certificato → nome "MacSweep Local Signing", tipo identità "Radice autofirmata", tipo certificato "Firma del codice".
 
 ## Sicurezza
 
-- File e cartelle vanno nel Cestino (`FileManager.trashItem`), ripristinabili dal Registro. Azioni definitive, sempre con conferma esplicita: "Svuota Cestino", eliminazioni Docker e simulatori (le fanno i rispettivi tool), DerivedData/Log nella pulizia programmata se spuntati.
-- Mai toccati: `/System`, `/Library`, radici utente (`~`, `~/Library`, `~/Documents`…), cartelle dirette in `~/Library`. Fuori dalla home solo `/Applications/*.app`.
+- File e cartelle vanno **nel Cestino** (`FileManager.trashItem`) e si ripristinano dal Registro.
+- Le azioni definitive chiedono sempre una conferma esplicita: Svuota Cestino, le eliminazioni di Docker e dei simulatori (le fanno i rispettivi tool), e DerivedData/Log nella pulizia programmata se li spunti.
+- Non tocca mai `/System`, `/Library`, le radici utente (`~`, `~/Library`, `~/Documents`…) né le cartelle dirette dentro `~/Library`. Fuori dalla home tocca solo `/Applications/*.app` e i dischi esterni.
+- Ogni operazione finisce in `~/Library/Logs/MacSweep.log`.
 
-## File
+## Struttura
 
-- `Sources/Scanner.swift`: scanner veloce e cache su disco
-- `Sources/Core.swift`: guard, cestino, registro, store
-- `Sources/Features.swift`: avvio automatico, andamento, duplicati, Docker, simulatori, modelli AI, VM, pulizia programmata, ripristino
-- `Sources/FeatureViews.swift`: viste delle sezioni sopra + barra dei menu
-- `Sources/Extras.swift`: svuota Cestino, Pulizia rapida, festa, updater sviluppo, notch
-- `Sources/More.swift` / `Sources/MoreViews.swift`: browser, prestazioni, aggiornamenti, versioni, Homebrew, Git, batteria, dischi esterni, mappa
+| File | Contenuto |
+|---|---|
+| `Sources/App.swift` | ingresso, finestra, Panoramica, Esplora, Disinstalla, File grandi, Manutenzione |
+| `Sources/Core.swift` | protezioni, Cestino, registro, stato dell'app |
+| `Sources/Scanner.swift` | scanner parallelo (`getattrlistbulk`) e cache su disco |
+| `Sources/Features.swift` / `FeatureViews.swift` | andamento, duplicati, Docker, simulatori, modelli AI, VM, avvio automatico, pulizia programmata, registro, barra dei menu |
+| `Sources/More.swift` / `MoreViews.swift` | browser, prestazioni, aggiornamenti, versioni, Homebrew, Git, batteria, dischi esterni, mappa |
+| `Sources/Extras.swift` | Svuota Cestino, Pulizia rapida, festa, updater sviluppo, notch |
+| `scripts/icon.swift` | disegna l'icona |
+| `build.sh` | build, firma, self-test, installazione |
 
-Verifiche senza interfaccia: `MacSweep --selftest`, `MacSweep --render-map <cartella> <out.png>`, `MacSweep --render-ui <cartella>`, `MacSweep --diag`.
-- `Sources/App.swift`: interfaccia
-- `scripts/icon.swift`: disegna l'icona
-- `build.sh`: build, firma ad-hoc, self-test, install
+Per verificare l'app senza interfaccia:
+- `MacSweep --selftest`: protezioni, residui, scanner contro `du`, duplicati, ripristino, logica del notch;
+- `MacSweep --render-map <cartella> <out.png>`: disegna la mappa di una cartella;
+- `MacSweep --render-ui <cartella>`: disegna notch, festa e Pulizia rapida;
+- `MacSweep --page <pagina>`: apre una pagina, comodo per gli screenshot.
